@@ -16,3 +16,5 @@
 hello <- function() {
   print("Hello, world!")
 }
+
+F:\Users\feng\Desktop\4800\rejectionsampling
