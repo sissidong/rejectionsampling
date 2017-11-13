@@ -13,8 +13,10 @@
 #   Check Package:             'Ctrl + Shift + E'
 #   Test Package:              'Ctrl + Shift + T'
 
-hello <- function() {
-  print("Hello, world!")
+oneDsample <- function(f, N, lb, ub) {
+  ones <- runif(N, lb, ub)
+  #maxf<-c
+  maxf<-max(ones)+1
+  unis <- runif(N, 0, maxf)
+  ones[unis < f(ones)]
 }
-
-F:\Users\feng\Desktop\4800\rejectionsampling
