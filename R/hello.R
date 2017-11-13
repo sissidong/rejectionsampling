@@ -1,18 +1,15 @@
-# Hello, world!zzzfs
-#
-# This is an example function named 'hello'
-# which prints 'Hello, world!'.
-#
-# You can learn more about package authoring with RStudio at:
-#
-#   http://r-pkgs.had.co.nz/
-#
-# Some useful keyboard shortcuts for package authoring:
-#
-#   Build and Reload Package:  'Ctrl + Shift + B'
-#   Check Package:             'Ctrl + Shift + E'
-#   Test Package:              'Ctrl + Shift + T'
 
+
+#' @param f the pdf that we are sampling from
+#' @param N the nimber of attempted samples.
+#' @param lb lower bound of support of f
+#' @param ub upper bound of support of f
+
+#' @param maxf bond of f
+#' @param k if function is linear function then k is the slope
+#'
+#' @return A vector containing samples from pdf
+#' @export
 oneDsample <- function(f, N, lb, ub) {
   ones <- runif(N, lb, ub)
   #maxf<-c
