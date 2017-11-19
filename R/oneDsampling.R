@@ -30,6 +30,15 @@ ImportS: ggplot2
 #' f = function(x) {ifelse(0 <= x & x <= 2*pi ,1/2/pi *(sin(x) + 1),0)
 #' oneDsampleplot(oneDsample(f,1000,0,2*pi))
 #'
+#' f<- function(x) {ifelse(0<=x, dlnorm(x,mean=0,sdlog=1),0)}
+#' a<-oneDsample(f,1000, 0, Inf)
+#' oneDsampleplot(a)
+#' oneDsamplehist(a)
+#'
+#' f<- function(x) dnorm(x,-10,2)
+#' a<-oneDsample(f,10000, Inf, 10)
+#' oneDsampleplot(a)
+#' oneDsamplehist(a)
 #'
 #'
 oneDsample <- function(f, N, lb, ub) {
@@ -39,38 +48,34 @@ oneDsample <- function(f, N, lb, ub) {
   else{
     if(lb!=Inf & ub!=Inf){
       maxf<-max(f(runif(10000,lb,ub)))+1
-      data.frame(x = replicate(N, {sx <- runif(1, lb, ub);
-      ifelse(runif(1,0,maxf) < f(sx), sx, NA)}))
+      data.frame(x = replicate(N, {sx <- runif(1, lb, ub);ifelse(runif(1,0,maxf) < f(sx), sx, NA)}))
+    }
+    else{
+      if(lb==Inf & ub!=Inf){
+        x<-rnorm(10000,ub,100)
+        maxf<-max(f(x))
+        a=x[which(f(x)==maxf)]
+        if(maxf>0.5){sx <- runif(N, a-20 , ub)}
+        else{sx <- rnorm(N*100, x, 100)}
       }
-    else if(lb>0 & ub==Inf){
-      maxf<-max(f(rexp(10000,rate=0.001)))+1
-      data.frame(x = replicate(N*10, {sx <- rexp(1, rate=0.001);
-      ifelse(runif(1,0,maxf+1000*dexp(sx, rate=0.001)) < f(sx), sx, NA)}))
+      else if(lb!=Inf & ub==Inf){
+        x<-rnorm(10000,lb,100)
+        maxf<-max(f(x))
+        a=x[which(f(x)==maxf)]
+        if(maxf>0.5){sx <- runif(N, lb , a+20)}
+        else{sx <- rnorm(N*100, x, 100)}
       }
-    else if(lb==Inf & ub!=Inf){
-      maxf<-max(f(rnorm(10000,ub,1000)))+1
-      data.frame(x = replicate(N*100, {sx <- rnorm(1, ub, 10000^2);
-      ifelse(runif(1,0,maxf+2.5*1000*dnorm(sx, ub, 1000)) < f(sx), sx, NA)}))
-      }
-    else if(lb!=Inf & ub==Inf){
-      maxf<-max(f(rnorm(10000,lb,100)))+1
-      data.frame(x = replicate(N*1000, {sx <- rnorm(1, lb, 1000);
-      ifelse(runif(1,0,maxf+2.5*1000*dnorm(sx, lb, 1000)) < f(sx), sx, NA)}))
-      }
+      data.frame(x = {ifelse(runif(N*100,0,maxf+1) < f(sx), sx, NA)})
+    }
   }
 }
-
-
 oneDsampleplot<-function(oneDsample){
   w<-data.frame(oneDsample)
   ggplot(w,aes(x)) + geom_density() + stat_function(fun = f, color = "red")
 }
-
 oneDsamplehist<-function(oneDsample){
   a<-data.frame(na.omit(oneDsample))
   a<-unlist(a)
   hist(a)
 }
-
-
 
