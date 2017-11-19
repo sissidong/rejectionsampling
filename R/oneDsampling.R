@@ -20,18 +20,18 @@ ImportS: ggplot2
 #' @example
 #'
 #' f<- function(x) {ifelse(-1< x & x < 0, 2*(x+1), 0)}
-#' a<-oneDsample(f,1000, -1, 0)
+#' a<-oneDsample(f,10000, -1, 0)
 #' oneDsampleplot(a)
 #'
 #' f<-function(x) {ifelse(0 <= x & x <=1, 2*(1-x), 0)}
-#' w<-oneDsample(f,1000, 0, 1)
+#' w<-oneDsample(f,10000, 0, 1)
 #' oneDsamplehist(w)
 #'
 #' f = function(x) {ifelse(0 <= x & x <= 2*pi ,1/2/pi *(sin(x) + 1),0)
 #' oneDsampleplot(oneDsample(f,1000,0,2*pi))
 #'
 #' f<- function(x) {ifelse(0<=x, dlnorm(x,mean=0,sdlog=1),0)}
-#' a<-oneDsample(f,1000, 0, Inf)
+#' a<-oneDsample(f,10000, 0, Inf)
 #' oneDsampleplot(a)
 #' oneDsamplehist(a)
 #'
@@ -39,6 +39,10 @@ ImportS: ggplot2
 #' a<-oneDsample(f,10000, Inf, 10)
 #' oneDsampleplot(a)
 #' oneDsamplehist(a)
+#'
+#' f<- function(x) dnorm(x,-10,2)
+#' a<-oneDsample(f,10000, Inf, Inf)
+#' oneDsampleplot(a)
 #'
 #'
 oneDsample <- function(f, N, lb, ub) {
@@ -56,23 +60,32 @@ oneDsample <- function(f, N, lb, ub) {
         maxf<-max(f(x))
         a=x[which(f(x)==maxf)]
         if(maxf>0.5){sx <- runif(N, a-20 , ub)}
-        else{sx <- rnorm(N*100, x, 100)}
+        else{sx <- rnorm(N*100, a, 100)}
       }
       else if(lb!=Inf & ub==Inf){
         x<-rnorm(10000,lb,100)
         maxf<-max(f(x))
         a=x[which(f(x)==maxf)]
         if(maxf>0.5){sx <- runif(N, lb , a+20)}
-        else{sx <- rnorm(N*100, x, 100)}
+        else{sx <- rnorm(N*100, a, 100)}
+      }
+      else{
+        x<-rnorm(10000,0,100)
+        maxf<-max(f(x))
+        a=x[which(f(x)==maxf)]
+        if(maxf>0.5){sx <- runif(N, a-20 , a+20)}
+        else{sx <- rnorm(N*100, a, 1000)}
       }
       data.frame(x = {ifelse(runif(N*100,0,maxf+1) < f(sx), sx, NA)})
     }
   }
 }
+
 oneDsampleplot<-function(oneDsample){
   w<-data.frame(oneDsample)
   ggplot(w,aes(x)) + geom_density() + stat_function(fun = f, color = "red")
 }
+
 oneDsamplehist<-function(oneDsample){
   a<-data.frame(na.omit(oneDsample))
   a<-unlist(a)
