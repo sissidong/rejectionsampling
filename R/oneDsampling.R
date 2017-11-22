@@ -20,32 +20,22 @@ ImportS: ggplot2
 #' @example
 #'
 #' f<- function(x) {ifelse(-1< x & x < 0, 2*(x+1), 0)}
-#' a<-oneDsample(f,10000, -1, 0)
-#' oneDsampleplot(a)
+#' oneDsampleplot(oneDsample(f,10000,-1,0))
 #'
 #' f<-function(x) {ifelse(0 <= x & x <=1, 2*(1-x), 0)}
-#' w<-oneDsample(f,10000, 0, 1)
-#' oneDsamplehist(w)
+#' oneDsampleplot(oneDsample(f,10000)
 #'
-#' f = function(x) {ifelse(0 <= x & x <= 2*pi ,1/2/pi *(sin(x) + 1),0)
+#' f = function(x) {ifelse(0 <= x & x <= 2*pi ,1/2/pi *(sin(x) + 1),0)}
 #' oneDsampleplot(oneDsample(f,1000,0,2*pi))
 #'
-#' f<- function(x) {ifelse(0<=x, dlnorm(x,mean=0,sdlog=1),0)}
-#' a<-oneDsample(f,10000, 0, Inf)
-#' oneDsampleplot(a)
-#' oneDsamplehist(a)
+#' f<- function(x) dlnorm(x,mean=0,sdlog=1)
+#' oneDsampleplot(oneDsample(f,10000))
 #'
 #' f<- function(x) dnorm(x,-10,2)
-#' a<-oneDsample(f,10000, Inf, 10)
-#' oneDsampleplot(a)
-#' oneDsamplehist(a)
-#'
-#' f<- function(x) dnorm(x,-10,2)
-#' a<-oneDsample(f,10000, Inf, Inf)
-#' oneDsampleplot(a)
+#' oneDsampleplot(oneDsample(f,10000))
 #'
 #'
-oneDsample <- function(f, N, lb, ub) {
+oneDsample <- function(f, N, lb=Inf, ub=Inf) {
   if (abs(integrate(f,lb,ub)$val-1)>0.001){
     stop("Error: not a pdf.The area under the function you given should be 1")
   }
@@ -55,28 +45,18 @@ oneDsample <- function(f, N, lb, ub) {
       data.frame(x = replicate(N, {sx <- runif(1, lb, ub);ifelse(runif(1,0,maxf) < f(sx), sx, NA)}))
     }
     else{
-      if(lb==Inf & ub!=Inf){
-        x<-rnorm(10000,ub,100)
-        maxf<-max(f(x))
-        a=x[which(f(x)==maxf)]
-        if(maxf>0.5){sx <- runif(N, a-20 , ub)}
-        else{sx <- rnorm(N*100, a, 100)}
-      }
-      else if(lb!=Inf & ub==Inf){
-        x<-rnorm(10000,lb,100)
-        maxf<-max(f(x))
-        a=x[which(f(x)==maxf)]
-        if(maxf>0.5){sx <- runif(N, lb , a+20)}
-        else{sx <- rnorm(N*100, a, 100)}
-      }
-      else{
-        x<-rnorm(10000,0,100)
-        maxf<-max(f(x))
-        a=x[which(f(x)==maxf)]
-        if(maxf>0.5){sx <- runif(N, a-20 , a+20)}
-        else{sx <- rnorm(N*100, a, 1000)}
-      }
-      data.frame(x = {ifelse(runif(N*100,0,maxf+1) < f(sx), sx, NA)})
+      x<-runif(100000,-1000,1000)
+      maxf<-max(f(x))
+      a=x[which( f(x) == maxf )]
+      minf<-min(f(x))
+      b=x[which( f(x) == minf )]
+      b=min((abs(b-a)))
+      sd1 = (2/maxf)*3                       # 2/maxf according to Area of triangle is 1, *2 for safty
+      #sd2 = 2/(sqrt(2*pi)*maxf)             #  for safety, make sd little large
+      sd3 = (abs(b-a))/3
+      sd=mean(sd1,sd3)
+      c= maxf/dnorm(a,a,sd)
+      data.frame(x = replicate(N, {sx <- rnorm(1,a,sd); ifelse( runif(1,0,c*dnorm(1,a,sd)) < f(sx), sx, NA)}))
     }
   }
 }
