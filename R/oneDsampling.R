@@ -6,10 +6,12 @@
 
 ImportS: ggplot2
 
-#' @param f the pdf that we are sampling from
-#' @param N the nimber of attempted samples.
-#' @param lb lower bound of support of f
-#' @param ub upper bound of support of f
+#' @param f       The pdf that we are sampling from
+#' @param N       The number of attempted samples.  Default value is 50000.
+#' @param lb      lower bound of support of f.      Default value is Inf.
+#' @param ub      upper bound of support of f.      Default value is Inf.
+#' @param method  There are two method you can choose, 'normal' or 'uniform.
+#'                Defalt method will be the best method we select for your pdf
 
 #' @return A vector containing samples from pdf (including NA)
 #'         ggplot of original function(red) and simulation density function

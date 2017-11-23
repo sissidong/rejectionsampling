@@ -1,6 +1,6 @@
 #' Single variable Rejection Sampling
 #'
-#' This function 'meanoneD(f,N,lb,up)' shows the Expect value of the given pdf (with one r.v.) by using single variabel rejection sampling.
+#' This function 'meanoneD(f,N,lb,up)' shows the Expected value of the given pdf (with one r.v.) by using single variabel rejection sampling.
 #'
 #'
 
@@ -60,3 +60,4 @@ EoneD<- function(f, N, lb, ub) {
     mean(sample$x,na.rm=TRUE)
   }
 }
+
