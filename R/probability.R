@@ -1,16 +1,14 @@
 #' Single variable Rejection Sampling
 #'
-#' This function 'PoneD(f,N,lb,up)' shows the probability of the given pdf (with one r.v.)and situation
-#' by using single variabel rejection sampling.
+#' This function 'PoneD(f,N,lb,up)' shows the probability of the given pdf (with one r.v.)and situation is P(x<val)
+#' by using single variabel rejection sampling. (Note: if you need P(x>val), you can use 1- p(x<val))
 #'
 #'
-
-
 #' @param f the pdf that we are sampling from
 #' @param N the nimber of attempted samples.
 #' @param lb lower bound of support of f
 #' @param ub upper bound of support of f
-#' @param p  value
+#' @param val  value
 
 #' @return  probability of given pdf (with one r.v.) and situation
 #'
@@ -25,7 +23,7 @@
 #' prooneD(f,10000, -1, 0,-0.5)
 #'
 #'
-prooneD<- function(f, N, lb, ub,p) {
+prooneD<- function(f, N, lb, ub,val) {
   if (abs(integrate(f,lb,ub)$val-1)>0.001){
     stop("Error: not a pdf.The area under the function you given should be 1")
   }
@@ -59,6 +57,6 @@ prooneD<- function(f, N, lb, ub,p) {
       }
       sample<-data.frame(x = {ifelse(runif(N*100,0,maxf+1) < f(sx), sx, NA)})
     }
-    mean(sample$x < p, na.rm = TRUE)
+    mean(sample$x < val, na.rm = TRUE)
   }
 }
