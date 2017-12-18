@@ -4,7 +4,6 @@
 #'
 #'
 
-ImportS: ggplot2
 
 #' @param f the pdf that we are sampling from
 #' @param N the nimber of attempted samples.
