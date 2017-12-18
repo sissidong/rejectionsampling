@@ -1,11 +1,9 @@
 #' Single variable Rejection Sampling
 #'
-#' This function 'oneDsample(f,N,lb,up,method)' implements single variabel rejection sampling for rvs with bounded support and which have have bounded pdf.
+#' This function 'oneDsample(f,N,lb,up,method)' implements single variable rejection sampling for continuous rvs with or without bounded support.
 #'
-#' Additionaly, the function 'oneDsampleplot()' and 'oneDsamplehist()' shows the plot of original function and simulation density function.
+#' Additionally, the function 'oneDsampleplot()' and 'oneDsamplehist()' shows the plot of original function and simulation density function.
 
-ImportS: ggplot2
-Imports: metRology
 
 #' @param f       The pdf that we are sampling from
 #' @param N       The number of attempted samples.  Default value is 50000.
@@ -54,7 +52,7 @@ norm<-function(f, N=50000){
   maxf<-max(f(x))
   a=x[which( f(x) == maxf )]
   a=mean(a)
-  sd = 2/maxf                    
+  sd = 2/maxf
   c= 2*maxf/dnorm(a,a,sd)
   data.frame(x = replicate(N, {sx <- rnorm(1,a,sd); ifelse( runif(1,0,c*dnorm(sx,a,sd)) < f(sx), sx, NA)}))
 }
@@ -66,7 +64,7 @@ t<-function(f,N=50000){
   a=mean(a)
   sd=2/maxf
   c=2*maxf/dt.scaled(a,df=1,mean=a,sd)
-  data.frame(x = replicate(N, {sx <- rt.scaled(1,1,mean=a,sd); 
+  data.frame(x = replicate(N, {sx <- rt.scaled(1,1,mean=a,sd);
   ifelse( runif(1,0,c*dt.scaled(sx,df=1,mean=a,sd)) < f(sx), sx, NA)}))
 }
 
