@@ -1,0 +1,279 @@
+---
+title: "Rejection sampling"
+author: "Xiaofu Dong"
+date: "12/18/17"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{rejection sampling}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Abstract
+Rejection sampling is a basic technique used to generate observations from a continuous distribution which is close to the pdf function the user give. By rejection sampling method, we can easily get the expected value and probability of simulation function without integral to the original function
+
+The process (uniform method as example)
+1.	Take uniform random sample between lower bound and upper bound, call it X
+2.	Take uniform random sample between 0 and the max of function     call it t.
+3.	If t<f(x), keep x as a sample    otherwise, reject it
+4.	Repeat
+Note: different method will change the sample choosing way in step1 and step2.
+      There are three methods, uniform distribution, normal distribution and t-distribution.
+      
+```{r warning=FALSE, message=FALSE}
+library(ggplot2)
+library(cubature)
+library(metRology)
+```      
+
+## One dimensional rejection sampling
+This function 'oneDsample(f,N,lb,up,method)' implements single variable rejection sampling for continuous random variables with or without bounded support. The function must be a correct pdf, other wise the function will output error. Notice if the input pdf is discrete, this function cannot detect it. The default lower bound and upper bound is Inf. In addition, this function will automatically choose a better method to do rejection sampling.
+Additionally, the function 'oneDsampleplot()' shows the plot of original function and simulation density function.
+
+Parameter:
+ f       The pdf that we are sampling from
+ N       The number of attempted samples.  Default value is 50000.
+ lb      lower bound of support of f.      Default value is Inf.
+ ub      upper bound of support of f.      Default value is Inf.
+ method  There are three method you can choose, 'norm', 't' or 'unif'.
+         Defalt method will be the best method we select for your pdf.
+         
+## code
+```{r}
+unif<-function(f, N=50000, lb, ub){
+  maxf<-optimize(f,c(lb,ub),maximum = TRUE)
+  maxf<-maxf$objective
+  data.frame(x = replicate(N, {sx <- runif(1, lb, ub);ifelse(runif(1,0,maxf) < f(sx), sx, NA)}))
+}
+norm<-function(f, N=50000){
+  x<-runif(100000,-1000,1000)
+  maxf<-max(f(x))
+  a=x[which( f(x) == maxf )]
+  a=mean(a)
+  sd = 2/maxf
+  c= 2*maxf/dnorm(a,a,sd)
+  data.frame(x = replicate(N, {sx <- rnorm(1,a,sd); ifelse( runif(1,0,c*dnorm(sx,a,sd)) < f(sx), sx, NA)}))
+}
+
+t<-function(f,N=50000){
+  x<-runif(100000,-1000,1000)
+  maxf<-max(f(x))
+  a=x[which( f(x) == maxf )]
+  a=mean(a)
+  sd=2/maxf
+  c=2*maxf/dt.scaled(a,df=1,mean=a,sd)
+  data.frame(x = replicate(N, {sx <- rt.scaled(1,1,mean=a,sd);
+  ifelse( runif(1,0,c*dt.scaled(sx,df=1,mean=a,sd)) < f(sx), sx, NA)}))
+}
+
+oneDsample <- function(f, N=50000, lb=Inf, ub=Inf,method='best') {
+  if (abs(integrate(f,lb,ub)$val-1)>0.001){
+    stop("Error: not a pdf.The area under the function you given should be 1")
+  }
+  else{
+    if(method=='best'){
+      if(lb!=Inf & ub!=Inf){unif(f,N,lb,ub)}
+      else{norm(f,N)}
+    }
+    else if(method=='t'){t(f,N)}
+    else if(method=='norm'){norm(f,N)}
+    else if(method=='unif'){
+      if(lb!=Inf & ub!=Inf){unif(f,N,lb,ub)}
+      else{stop("Error: if your pdf without bound, you cannot use uniform method.")}
+    }
+    else{stop("Error: there are three method you can choose, 'norm', 't' or 'unif'.") }
+  }
+}
+
+oneDsampleplot<-function(oneDsample){
+  w<-data.frame(oneDsample)
+  ggplot(w,aes(x)) + geom_density() + stat_function(fun = f, color = "red")
+}
+```
+
+## Example
+```{r}
+f<- function(x) {ifelse(-1< x & x < 0, 2*(x+1), 0)}
+oneDsampleplot(oneDsample(f,20000,-1,0,method='unif'))
+
+f<- function(x) dlnorm(x,mean=0,sdlog=1)
+oneDsampleplot(oneDsample(f,50000,'norm'))
+
+f<- function(x) dnorm(x,-10,2)
+oneDsampleplot(oneDsample(f,method='t'))
+
+f = function(x) {ifelse(0 <= x & x <= 2*pi ,1/2/pi *(sin(x) + 1),0)}
+oneDsampleplot(oneDsample(f,50000,0,2*pi))
+
+f<- function(x) 1/(pi*(1+x^2))
+oneDsampleplot(oneDsample(f))
+```
+
+## Two dimensional rejection sampling
+Two variable Rejection Sampling
+This function "twoDsample(f, N, lbx, ubx, lby, uby)" implements two variabel rejection sampling for rvs with bounded support and which have bounded pdf.
+Additionaly, the function 'twoDsampleplot()' shows the plot of simulation joint density function.
+
+Parameter:
+ f the pdf that we are sampling from
+ N the nimber of attempted samples.
+ lbx lower bound of x support of f
+ ubx upper bound of x support of f
+ lby lower bound of y support of f
+ uby upper bound of y support of f
+ 
+## code 
+```{r}
+twoDsample <- function(f, N, lbx=-5000, ubx=5000, lby=-5000, uby=5000) {
+  if (abs(adaptIntegrate(f, c(lbx, lby), c(ubx, uby), maxEval=10000)$integral - 1) > 0.001) {
+    stop("Error: Bound is missing/wrong or the function is not a pdf. The area under the function you given should be 1")
+  }
+  if (lbx != -5000 & ubx != 5000 & lby != -5000 & uby != 5000){
+    maxf <- max(replicate(100000,f(c(runif(1,lbx,ubx),runif(1,lby,uby)))))
+    twos = c()
+    n = 0
+    while (n < N) {
+      two <- c(runif(1,lbx,ubx),runif(1,lby,uby))
+      if (runif(1, 0, maxf) < f(two)){
+        twos = c(twos, two)
+        n = n+1
+      }
+    }
+    data.frame(x=twos[c(seq(1,length(twos)-1,2))],y=twos[c(seq(2,length(twos),2))])
+  }
+}
+```
+
+## Example
+```{r}
+library(ggplot2)
+f <- function(x){
+ x1 = x[1]
+ x2 = x[2]
+ ifelse(0<x1 & x1<1 & 0<x2 & x2<1 & 0<x1+x2 & x1+x2<1, 24*x1*x2, 0)}
+a <- twoDsample(f , N=1000, lbx = 0, ubx = 1, lby = 0, uby = 1)
+ggplot(a, aes(x, y)) +  geom_density_2d()
+```
+
+## Expected value
+This function 'meanoneD(f,N,lb,up)' shows the Expected value of the given pdf (with one r.v.) by using single variabel rejection sampling.
+
+Parameter:
+ f the pdf that we are sampling from
+ N the nimber of attempted samples.
+ lb lower bound of support of f
+ ub upper bound of support of f
+ 
+##code 
+```{r}
+EoneD<- function(f, N, lb, ub) {
+  if (abs(integrate(f,lb,ub)$val-1)>0.001){
+    stop("Error: not a pdf.The area under the function you given should be 1")
+  }
+  else{
+    if(lb!=Inf & ub!=Inf){
+      maxf<-max(f(runif(10000,lb,ub)))+1
+      sample<-data.frame(x = replicate(N, {sx <- runif(1, lb, ub);ifelse(runif(1,0,maxf) < f(sx), sx, NA)}))
+    }
+    else{
+      if(lb==Inf & ub!=Inf){
+        x<-rnorm(10000,ub,100)
+        maxf<-max(f(x))
+        a=x[which(f(x)==maxf)]
+        if(maxf>0.5){sx <- runif(N, a-20 , ub)}
+        else{sx <- rnorm(N*100, a, 100)}
+      }
+      else if(lb!=Inf & ub==Inf){
+        x<-rnorm(10000,lb,100)
+        maxf<-max(f(x))
+        a=x[which(f(x)==maxf)]
+        if(maxf>0.5){sx <- runif(N, lb , a+20)}
+        else{sx <- rnorm(N*100, a, 100)}
+      }
+      else{
+        x<-rnorm(10000,0,100)
+        maxf<-max(f(x))
+        a=x[which(f(x)==maxf)]
+        if(maxf>0.5){sx <- runif(N, a-20 , a+20)}
+        else{sx <- rnorm(N*100, a, 100)}
+      }
+      sample<-data.frame(x = {ifelse(runif(N*100,0,maxf+1) < f(sx), sx, NA)})
+    }
+    mean(sample$x,na.rm=TRUE)
+  }
+}
+```
+
+
+## Example
+```{r}
+f<- function(x) dnorm(x,-10,2)
+EoneD(f,10000, Inf, Inf)
+
+f<- function(x) {ifelse(-1< x & x < 0, 2*(x+1), 0)}
+EoneD(f,10000, -1, 0)
+```
+
+## Probability
+This function 'PoneD(f,N,lb,up,val)' shows the probability of the given pdf (with one r.v.)and situation is P(x<val) by using single variabel rejection sampling. (Note: if you need P(x>val), you can use 1- p(x<val))
+
+Parameter:
+ f the pdf that we are sampling from
+ N the nimber of attempted samples.
+ lb lower bound of support of f
+ ub upper bound of support of f
+ val  value
+ 
+##code
+```{r}
+prooneD<- function(f, N, lb, ub,val) {
+  if (abs(integrate(f,lb,ub)$val-1)>0.001){
+    stop("Error: not a pdf.The area under the function you given should be 1")
+  }
+  else{
+    if(lb!=Inf & ub!=Inf){
+      maxf<-max(f(runif(10000,lb,ub)))+1
+      sample<-data.frame(x = replicate(N, {sx <- runif(1, lb, ub);ifelse(runif(1,0,maxf) < f(sx), sx, NA)}))
+    }
+    else{
+      if(lb==Inf & ub!=Inf){
+        x<-rnorm(10000,ub,100)
+        maxf<-max(f(x))
+        a=x[which(f(x)==maxf)]
+        if(maxf>0.5){sx <- runif(N, a-20 , ub)}
+        else{sx <- rnorm(N*100, a, 100)}
+      }
+      else if(lb!=Inf & ub==Inf){
+        x<-rnorm(10000,lb,100)
+        maxf<-max(f(x))
+        a=x[which(f(x)==maxf)]
+
+        if(maxf>0.5){sx <- runif(N, lb , a+20)}
+        else{sx <- rnorm(N*100, a, 100)}
+      }
+      else{
+        x<-rnorm(10000,0,100)
+        maxf<-max(f(x))
+        a=x[which(f(x)==maxf)]
+        if(maxf>0.5){sx <- runif(N, a-20 , a+20)}
+        else{sx <- rnorm(N*100, a, 100)}
+      }
+      sample<-data.frame(x = {ifelse(runif(N*100,0,maxf+1) < f(sx), sx, NA)})
+    }
+    mean(sample$x < val, na.rm = TRUE)
+  }
+}
+```
+
+## Example
+```{r}
+f<- function(x) dnorm(x,-10,2)
+prooneD(f,10000, Inf, Inf,-10)
+
+f<- function(x) {ifelse(-1< x & x < 0, 2*(x+1), 0)}
+prooneD(f,10000, -1, 0,-0.5)
+```
+
+
+
+
