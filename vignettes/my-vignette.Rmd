@@ -1,4 +1,4 @@
----
++---
 title: "Rejection sampling"
 author: "Xiaofu Dong"
 date: "12/18/17"
@@ -9,18 +9,31 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
 ## Abstract
 Rejection sampling is a basic technique used to generate observations from a continuous distribution which is close to the pdf function the user give. By rejection sampling method, we can easily get the expected value and probability of simulation function without integral to the original function
 
 The process (uniform method as example)
+
 1.	Take uniform random sample between lower bound and upper bound, call it X
+
 2.	Take uniform random sample between 0 and the max of function     call it t.
-3.	If t<f(x), keep x as a sample    otherwise, reject it
+
+3.	If t small than f(x), keep x as a sample    otherwise, reject it
+
 4.	Repeat
+
 Note: different method will change the sample choosing way in step1 and step2.
       There are three methods, uniform distribution, normal distribution and t-distribution.
       
-```{r warning=FALSE, message=FALSE}
+```{r include=FALSE}
 library(ggplot2)
 library(cubature)
 library(metRology)
@@ -31,15 +44,19 @@ This function 'oneDsample(f,N,lb,up,method)' implements single variable rejectio
 Additionally, the function 'oneDsampleplot()' shows the plot of original function and simulation density function.
 
 Parameter:
+
  f       The pdf that we are sampling from
- N       The number of attempted samples.  Default value is 50000.
+ 
+ N       The number of attempted samples.  Default value is 10000.
+ 
  lb      lower bound of support of f.      Default value is Inf.
+ 
  ub      upper bound of support of f.      Default value is Inf.
- method  There are three method you can choose, 'norm', 't' or 'unif'.
-         Defalt method will be the best method we select for your pdf.
+ 
+ method  There are three method you can choose, 'norm', 't' or 'unif'. Defalt method will be the best method we select for your pdf.
          
-## code
-```{r}
+
+```{r include=FALSE}
 unif<-function(f, N=50000, lb, ub){
   maxf<-optimize(f,c(lb,ub),maximum = TRUE)
   maxf<-maxf$objective
@@ -92,7 +109,7 @@ oneDsampleplot<-function(oneDsample){
 ```
 
 ## Example
-```{r}
+```{r warning= FALSE}
 f<- function(x) {ifelse(-1< x & x < 0, 2*(x+1), 0)}
 oneDsampleplot(oneDsample(f,20000,-1,0,method='unif'))
 
@@ -115,15 +132,21 @@ This function "twoDsample(f, N, lbx, ubx, lby, uby)" implements two variabel rej
 Additionaly, the function 'twoDsampleplot()' shows the plot of simulation joint density function.
 
 Parameter:
+
  f the pdf that we are sampling from
+ 
  N the nimber of attempted samples.
+ 
  lbx lower bound of x support of f
+ 
  ubx upper bound of x support of f
+ 
  lby lower bound of y support of f
+ 
  uby upper bound of y support of f
  
-## code 
-```{r}
+ 
+```{r include=FALSE}
 twoDsample <- function(f, N, lbx=-5000, ubx=5000, lby=-5000, uby=5000) {
   if (abs(adaptIntegrate(f, c(lbx, lby), c(ubx, uby), maxEval=10000)$integral - 1) > 0.001) {
     stop("Error: Bound is missing/wrong or the function is not a pdf. The area under the function you given should be 1")
@@ -145,8 +168,7 @@ twoDsample <- function(f, N, lbx=-5000, ubx=5000, lby=-5000, uby=5000) {
 ```
 
 ## Example
-```{r}
-library(ggplot2)
+```{r warning= FALSE}
 f <- function(x){
  x1 = x[1]
  x2 = x[2]
@@ -159,13 +181,17 @@ ggplot(a, aes(x, y)) +  geom_density_2d()
 This function 'meanoneD(f,N,lb,up)' shows the Expected value of the given pdf (with one r.v.) by using single variabel rejection sampling.
 
 Parameter:
+
  f the pdf that we are sampling from
+ 
  N the nimber of attempted samples.
+ 
  lb lower bound of support of f
+ 
  ub upper bound of support of f
  
-##code 
-```{r}
+ 
+```{r include=FALSE}
 EoneD<- function(f, N, lb, ub) {
   if (abs(integrate(f,lb,ub)$val-1)>0.001){
     stop("Error: not a pdf.The area under the function you given should be 1")
@@ -206,7 +232,7 @@ EoneD<- function(f, N, lb, ub) {
 
 
 ## Example
-```{r}
+```{r warning= FALSE}
 f<- function(x) dnorm(x,-10,2)
 EoneD(f,10000, Inf, Inf)
 
@@ -215,17 +241,21 @@ EoneD(f,10000, -1, 0)
 ```
 
 ## Probability
-This function 'PoneD(f,N,lb,up,val)' shows the probability of the given pdf (with one r.v.)and situation is P(x<val) by using single variabel rejection sampling. (Note: if you need P(x>val), you can use 1- p(x<val))
+This function 'PoneD(f,N,lb,up,val)' shows the probability of the given pdf (with one r.v.)and situation is P(x '<'val) by using single variabel rejection sampling. (Note: if you need P(x '>' val), you can use 1- p(x '<' val))
 
 Parameter:
+
  f the pdf that we are sampling from
- N the nimber of attempted samples.
- lb lower bound of support of f
- ub upper bound of support of f
- val  value
  
-##code
-```{r}
+ N the nimber of attempted samples.
+ 
+ lb lower bound of support of f
+ 
+ ub upper bound of support of f
+ 
+ val  value
+
+```{r include=FALSE}
 prooneD<- function(f, N, lb, ub,val) {
   if (abs(integrate(f,lb,ub)$val-1)>0.001){
     stop("Error: not a pdf.The area under the function you given should be 1")
@@ -266,14 +296,10 @@ prooneD<- function(f, N, lb, ub,val) {
 ```
 
 ## Example
-```{r}
+```{r warning= FALSE}
 f<- function(x) dnorm(x,-10,2)
 prooneD(f,10000, Inf, Inf,-10)
 
 f<- function(x) {ifelse(-1< x & x < 0, 2*(x+1), 0)}
 prooneD(f,10000, -1, 0,-0.5)
 ```
-
-
-
-
